@@ -19,10 +19,10 @@
 #include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 
-#include "flashgg/MicroAODFormats/interface/DiPhotonCandidate.h" 
-#include "flashgg/MicroAODFormats/interface/Electron.h"
+#include "flashgg/DataFormats/interface/DiPhotonCandidate.h" 
+#include "flashgg/DataFormats/interface/Electron.h"
 
-#include "flashgg/TagFormats/interface/DiPhotonMVAResult.h"
+#include "flashgg/DataFormats/interface/DiPhotonMVAResult.h"
 
 #include <DataFormats/Math/interface/deltaR.h>
 
