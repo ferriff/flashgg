@@ -1,12 +1,12 @@
-#ifndef FLASHgg_VHhadronicTag_h
-#define FLASHgg_VHhadronicTag_h
+#ifndef FLASHgg_VHHadronicTag_h
+#define FLASHgg_VHHadronicTag_h
 
 #include "flashgg/DataFormats/interface/DiPhotonTagBase.h"
 #include "flashgg/DataFormats/interface/Jet.h"
 
 namespace flashgg {
 
-  class VHhadronicTag: public DiPhotonTagBase {
+  class VHHadronicTag: public DiPhotonTagBase {
 
   public:
 

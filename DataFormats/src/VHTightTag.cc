@@ -1,9 +1,9 @@
-#include "flashgg/DataFormats/interface/VHtightTag.h"
+#include "flashgg/DataFormats/interface/VHTightTag.h"
 #include <algorithm>
 
 using namespace flashgg;
 
-VHtightTag::VHtightTag() : DiPhotonTagBase::DiPhotonTagBase()
+VHTightTag::VHTightTag() : DiPhotonTagBase::DiPhotonTagBase()
 {}
 
 VHtightTag::~VHtightTag() 

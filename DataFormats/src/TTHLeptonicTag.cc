@@ -1,12 +1,12 @@
-#include "flashgg/DataFormats/interface/TTHleptonicTag.h"
+#include "flashgg/DataFormats/interface/TTHLeptonicTag.h"
 #include <algorithm>
 
 using namespace flashgg;
 
-TTHleptonicTag::TTHleptonicTag() : DiPhotonTagBase::DiPhotonTagBase()
+TTHLeptonicTag::TTHLeptonicTag() : DiPhotonTagBase::DiPhotonTagBase()
 {}
 
-TTHleptonicTag::~TTHleptonicTag() 
+TTHLeptonicTag::~TTHLeptonicTag() 
 {}
 
 // N.B. Other attributes are set using methods in header file
