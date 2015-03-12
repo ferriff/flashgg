@@ -13,9 +13,9 @@ VHLooseTag::~VHLooseTag()
 VHLooseTag::VHLooseTag(edm::Ptr<DiPhotonCandidate> diPho, edm::Ptr<DiPhotonMVAResult> mvares) : DiPhotonTagBase::DiPhotonTagBase(diPho,*mvares) {}
 VHLooseTag::VHLooseTag(edm::Ptr<DiPhotonCandidate> dipho,DiPhotonMVAResult mvares) : DiPhotonTagBase::DiPhotonTagBase(dipho,mvares) {}
 
-VHlooseTag* VHlooseTag::clone () const {
-  VHlooseTag* result = new VHlooseTag(diPhoton(),diPhotonMVA());
-  result->setDiPhotonIndex(getDiPhotonIndex());
+VHLooseTag* VHLooseTag::clone () const {
+  VHLooseTag* result = new VHLooseTag(diPhoton(),diPhotonMVA());
+  result->setDiPhotonIndex(diPhotonIndex());
   result->setJets(Jets_);
   result->setMuons(Muons_);
   result->setElectrons(Electrons_);
