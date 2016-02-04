@@ -296,6 +296,14 @@ bool vtx_sel()
 }
 
 
+bool geometrical_acceptance(float eta1, float eta2)
+{
+        float ae1(fabs(eta1)), ae2(fabs(eta2));
+        return     (ae1 < 1.4442 || (ae1 > 1.566 && ae1 < 2.5))
+                && (ae2 < 1.4442 || (ae2 > 1.566 && ae2 < 2.5));
+}
+
+
 std::string summary(SelectionCounter & s)
 {
         SelectionPrinter p;
@@ -339,39 +347,46 @@ void process_events(TChain & c, SelectionCounter & s)
                 auto w = e.weight * PRESCALE;
                 s["all"] += w;
                 h_nvtx_all->Fill(e.nvtx, w);
-                if (e.l_r9 > 0.8 && e.s_r9 > 0.8
+
+                if (! geometrical_acceptance(e.l_scEta, e.s_scEta) ) continue;
+                s["acc"] += w;
+
+                if (!(e.l_r9 > 0.8 && e.s_r9 > 0.8
                     && isoCh(e.l_egChIso, e.l_scEta) < 20. && isoCh(e.s_egChIso, e.s_scEta) < 20.
-                    && isoCh(e.l_egChIso, e.l_scEta) / e.l_pt < 0.3 && isoCh(e.s_egChIso, e.s_scEta) / e.s_pt< 0.3) {
-                        s["isos"] += w;
-                        if (e.l_hadTowOverEm < 0.8 && e.s_hadTowOverEm < 0.8) {
-                                s["hoe"] += w;
-                                if (photonID_cutBased()) {
-                                        s["phoID_CutBasedLoose"] += w;
-                                        h_nvtx_sel_CB->Fill(e.nvtx, w);
-                                        if (e.l_ptOMgg >= 1. / 3. && e.s_ptOMgg >= 0.25 && e.maxEta < 2.5) {
-                                                s["kin"] += w;
-                                                if (vtx_sel()) {
-                                                        s["vtx"] += w;
-                                                        if (e.CMS_hgg_mass > 100 && e.CMS_hgg_mass < 180) {
-                                                                s["mass_window"] += w;
-                                                                if (e.l_passElVeto && e.s_passElVeto) {
-                                                                        s["csev"] += w;
-                                                                        if (e.l_phoID > -0.9 && e.s_phoID > -0.9) {
-                                                                                s["phoID_MVA"] += w;
-                                                                                h_nvtx_sel_MVA->Fill(e.nvtx, w);
-                                                                        }
-                                                                        if (e.l_IdMva > -0.9 && e.s_IdMva > -0.9) {
-                                                                                s["phoID_MVA_view"] += w;
-                                                                                h_nvtx_sel_MVA->Fill(e.nvtx, w);
-                                                                        }
-                                                                }
-                                                        }
-                                                }
-                                        }
-                                }
-                        }
+                    && isoCh(e.l_egChIso, e.l_scEta) / e.l_pt < 0.3 && isoCh(e.s_egChIso, e.s_scEta) / e.s_pt< 0.3)) continue;
+                s["isos"] += w;
+
+                if (!(e.l_hadTowOverEm < 0.8 && e.s_hadTowOverEm < 0.8)) continue;
+                s["hoe"] += w;
+
+                if (!photonID_cutBased()) continue;
+                s["phoID_CutBasedLoose"] += w;
+                h_nvtx_sel_CB->Fill(e.nvtx, w);
+
+                if (!( e.l_pt > 30 && e.s_pt > 20 )) continue;
+                s["kin_30_20"] += w;
+
+                if (!( e.l_ptOMgg >= 1. / 3. && e.s_ptOMgg >= 0.25 && e.maxEta < 2.5 )) continue;
+                s["kin_scaling"] += w;
+
+                if ( ! vtx_sel() ) continue;
+                s["vtx"] += w;
+
+                if (!( e.CMS_hgg_mass > 100 && e.CMS_hgg_mass < 180 )) continue;
+                s["mass_window"] += w;
+
+                if (!( e.l_passElVeto && e.s_passElVeto )) continue;
+                s["csev"] += w;
+
+                if (e.l_phoID > -0.9 && e.s_phoID > -0.9) {
+                        s["phoID_MVA"] += w;
+                        h_nvtx_sel_MVA->Fill(e.nvtx, w);
                 }
 
+                if (e.l_IdMva > -0.9 && e.s_IdMva > -0.9) {
+                        s["phoID_MVA_view"] += w;
+                        h_nvtx_sel_MVA->Fill(e.nvtx, w);
+                }
         }
         TObjString os(summary(s).c_str());
         os.Write("event_count_" + name);
@@ -385,7 +400,7 @@ int main()
         std::vector<std::pair<std::unique_ptr<TChain>, std::string> > trees;
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all")), "../../../prod/data_DoubleEG_v5/output_*.root" ) );
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all")), "../../../prod/data_DoubleEG_noMissing_v5/output_*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_singleshot.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_myMicroAODOutputFile_1.root" ) );
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DYJetsToLL_13TeV_all")), "../../../prod/mc_SplusB_v5/output_DYJetsToLL*.root" ) );
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DiPhotonJetsBox_MGG_80toInf_13TeV_all")), "../../../prod/mc_SplusB_v5/output_DiPhotonJetsBox_MGG-80toInf*.root" ) );
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_20to40_13TeV_all")), "../../../prod/mc_SplusB_v5/output_GJet_Pt-20to40*.root" ) );
