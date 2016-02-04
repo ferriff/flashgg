@@ -117,32 +117,33 @@ void set_adresses(TChain & c)
 
 void set_statuses(TChain & c)
 {
-        c.SetBranchStatus("*", 0);
-        c.SetBranchStatus("candidate_id", 0);
+        c.SetBranchStatus("*", 1);
+        /*
+        c.SetBranchStatus("candidate_id", 1);
         c.SetBranchStatus("CMS_hgg_mass", 1);
-        c.SetBranchStatus("event", 0);
+        c.SetBranchStatus("event", 1);
         c.SetBranchStatus("l_egChIso", 1);
         c.SetBranchStatus("l_egNhIso", 1);
         c.SetBranchStatus("l_egPhIso", 1);
         c.SetBranchStatus("l_hadTowOverEm", 1);
         c.SetBranchStatus("l_hoe", 1);
-        c.SetBranchStatus("l_IdMva", 0);
+        c.SetBranchStatus("l_IdMva", 1);
         c.SetBranchStatus("l_passElVeto", 1);
         c.SetBranchStatus("l_phoID", 1);
         c.SetBranchStatus("l_pt", 1);
         c.SetBranchStatus("l_ptOMgg", 1);
         c.SetBranchStatus("l_r9", 1);
         c.SetBranchStatus("l_scEta", 1);
-        c.SetBranchStatus("l_scPhi", 0);
+        c.SetBranchStatus("l_scPhi", 1);
         c.SetBranchStatus("l_sieie", 1);
-        c.SetBranchStatus("lumi", 0);
+        c.SetBranchStatus("lumi", 1);
         c.SetBranchStatus("maxEta", 1);
         c.SetBranchStatus("minR9", 1);
         c.SetBranchStatus("npu", 1);
         c.SetBranchStatus("nvtx", 1);
-        c.SetBranchStatus("processIndex", 0);
+        c.SetBranchStatus("processIndex", 1);
         c.SetBranchStatus("rho", 1);
-        c.SetBranchStatus("run", 0);
+        c.SetBranchStatus("run", 1);
         c.SetBranchStatus("s_egChIso", 1);
         c.SetBranchStatus("s_egNhIso", 1);
         c.SetBranchStatus("s_egPhIso", 1);
@@ -155,13 +156,14 @@ void set_statuses(TChain & c)
         c.SetBranchStatus("s_ptOMgg", 1);
         c.SetBranchStatus("s_r9", 1);
         c.SetBranchStatus("s_scEta", 1);
-        c.SetBranchStatus("s_scPhi", 0);
+        c.SetBranchStatus("s_scPhi", 1);
         c.SetBranchStatus("s_sieie", 1);
         c.SetBranchStatus("vtx_ndof", 1);
         c.SetBranchStatus("vtx_x", 1);
         c.SetBranchStatus("vtx_y", 1);
         c.SetBranchStatus("vtx_z", 1);
         c.SetBranchStatus("weight", 1);
+        */
 }
 
 
