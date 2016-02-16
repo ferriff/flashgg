@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "Rtypes.h"
+#include "TBits.h"
 #include "TChain.h"
 #include "TFile.h"
 #include "TH1D.h"
@@ -329,6 +331,16 @@ std::string summary(SelectionCounter & s)
 }
 
 
+bool check_bit(TBits & b, int n)
+{
+        if (b[n]) return false;
+        else {
+                b[n] = kTRUE;
+        }
+        return true;
+}
+
+
 void process_events(TChain & c, SelectionCounter & s)
 {
         auto nentries = c.GetEntries();
@@ -343,51 +355,72 @@ void process_events(TChain & c, SelectionCounter & s)
         auto h_nvtx_sel_CB = (TH1D*)h_nvtx_all->Clone(h_name);
         //h_name = "h_" + name + "_";
         //auto h_nvtx_sel_CB = (TH1D*)h_nvtx_all->Clone(h_name);
+        bool one_pass = false;
+        TBits bits;
         for (auto iev = 0; iev < nentries; iev += PRESCALE) {
                 if (iev && iev % 23456 == 0) fprintf(stderr, "analyzed events: % 15d  (%.2f)  -  %s\r", iev, iev * 100. / nentries, c.GetName());
                 c.GetEntry(iev);
+
+                //printf("--> %d\n", e.candidate_id);
+                int sel = 0;
+                if (e.candidate_id == 0) {
+                        one_pass = false;
+                        bits.ResetAllBits();
+                }
+                if (one_pass) continue;
+                
                 auto w = e.weight * PRESCALE;
-                s["all"] += w;
-                h_nvtx_all->Fill(e.nvtx, w);
-
-                if (! geometrical_acceptance(e.l_scEta, e.s_scEta) ) continue;
-                s["acc"] += w;
-
-                if (!(e.l_r9 > 0.8 && e.s_r9 > 0.8
-                    && isoCh(e.l_egChIso, e.l_scEta) < 20. && isoCh(e.s_egChIso, e.s_scEta) < 20.
-                    && isoCh(e.l_egChIso, e.l_scEta) / e.l_pt < 0.3 && isoCh(e.s_egChIso, e.s_scEta) / e.s_pt< 0.3)) continue;
-                s["isos"] += w;
-
-                if (!(e.l_hadTowOverEm < 0.8 && e.s_hadTowOverEm < 0.8)) continue;
-                s["hoe"] += w;
-
-                if (!photonID_cutBased()) continue;
-                s["phoID_CutBasedLoose"] += w;
-                h_nvtx_sel_CB->Fill(e.nvtx, w);
-
-                if (!( e.l_pt > 30 && e.s_pt > 20 )) continue;
-                s["kin_30_20"] += w;
-
-                if (!( e.l_ptOMgg >= 1. / 3. && e.s_ptOMgg >= 0.25 && e.maxEta < 2.5 )) continue;
-                s["kin_scaling"] += w;
-
-                if ( ! vtx_sel() ) continue;
-                s["vtx"] += w;
-
-                if (!( e.CMS_hgg_mass > 100 && e.CMS_hgg_mass < 180 )) continue;
-                s["mass_window"] += w;
-
-                if (!( e.l_passElVeto && e.s_passElVeto )) continue;
-                s["csev"] += w;
-
-                if (e.l_phoID > -0.9 && e.s_phoID > -0.9) {
-                        s["phoID_MVA"] += w;
-                        h_nvtx_sel_MVA->Fill(e.nvtx, w);
+                if ( check_bit(bits, sel++) ) {
+                        s["all"] += w;
+                        h_nvtx_all->Fill(e.nvtx, w);
                 }
 
-                if (e.l_IdMva > -0.9 && e.s_IdMva > -0.9) {
+                if (! geometrical_acceptance(e.l_scEta, e.s_scEta) ) continue;
+                if ( check_bit(bits, sel++) ) s["acc"] += w;
+
+                if (!( e.l_r9 > 0.8 && e.s_r9 > 0.8 )) continue;
+                if ( check_bit(bits, sel++) ) s["r9"] += w;
+
+                if (!( isoCh(e.l_egChIso, e.l_scEta) < 20. && isoCh(e.s_egChIso, e.s_scEta) < 20. )) continue;
+                if ( check_bit(bits, sel++) ) s["iso"] += w;
+
+                if (!( isoCh(e.l_egChIso, e.l_scEta) / e.l_pt < 0.3 && isoCh(e.s_egChIso, e.s_scEta) / e.s_pt< 0.3)) continue;
+                if ( check_bit(bits, sel++) ) s["iso_rel"] += w;
+
+                if (!(e.l_hadTowOverEm < 0.8 && e.s_hadTowOverEm < 0.8)) continue;
+                if ( check_bit(bits, sel++) ) s["hoe"] += w;
+
+                if (!photonID_cutBased()) continue;
+                if ( check_bit(bits, sel++) ) {
+                        s["phoID_CutBasedLoose"] += w;
+                        h_nvtx_sel_CB->Fill(e.nvtx, w);
+                }
+
+                if (!( e.l_pt > 30 && e.s_pt > 20 )) continue;
+                if ( check_bit(bits, sel++) ) s["kin_30_20"] += w;
+
+                if (!( e.l_ptOMgg >= 1. / 3. && e.s_ptOMgg >= 0.25 && e.maxEta < 2.5 )) continue;
+                if ( check_bit(bits, sel++) ) s["kin_scaling"] += w;
+
+                if ( ! vtx_sel() ) continue;
+                if ( check_bit(bits, sel++) ) s["vtx"] += w;
+
+                if (!( e.CMS_hgg_mass > 100 && e.CMS_hgg_mass < 180 )) continue;
+                if ( check_bit(bits, sel++) ) s["mass_window"] += w;
+
+                if (!( e.l_passElVeto && e.s_passElVeto )) continue;
+                if ( check_bit(bits, sel++) ) s["csev"] += w;
+
+                //if (!( e.l_phoID > -0.9 && e.s_phoID > -0.9 )) continue;
+                //s["phoID_MVA"] += w;
+                //h_nvtx_sel_MVA->Fill(e.nvtx, w);
+                //one_pass = true;
+
+                if (!( e.l_IdMva > -0.9 && e.s_IdMva > -0.9 )) continue;
+                if ( check_bit(bits, sel++) ) {
                         s["phoID_MVA_view"] += w;
                         h_nvtx_sel_MVA->Fill(e.nvtx, w);
+                        one_pass = true;
                 }
         }
         TObjString os(summary(s).c_str());
@@ -402,7 +435,8 @@ int main()
         std::vector<std::pair<std::unique_ptr<TChain>, std::string> > trees;
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all")), "../../../prod/data_DoubleEG_v5/output_*.root" ) );
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all")), "../../../prod/data_DoubleEG_noMissing_v5/output_*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_myMicroAODOutputFile_1.root" ) );
+        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_myMicroAODOutputFile_1.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_all_candidates_myMicroAODOutputFile_1.root" ) );
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DYJetsToLL_13TeV_all")), "../../../prod/mc_SplusB_v5/output_DYJetsToLL*.root" ) );
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DiPhotonJetsBox_MGG_80toInf_13TeV_all")), "../../../prod/mc_SplusB_v5/output_DiPhotonJetsBox_MGG-80toInf*.root" ) );
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_20to40_13TeV_all")), "../../../prod/mc_SplusB_v5/output_GJet_Pt-20to40*.root" ) );
