@@ -769,7 +769,7 @@ Commands:
                 make_option("-v","--verbose",
                             action="store_true", dest="verbose",
                             default=False,
-                            help="default: %default",)
+                            help="Do not truncate dataset name. default: %default",)
                 ]
                               )
         
