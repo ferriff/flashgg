@@ -655,7 +655,7 @@ class IclustJob(LsfJob):
         # domain-specific configuration
         if mydomain == "irfu.ext":
             # from the submission directory... FIXME
-            ret += 'tmpdir="`mktemp -d sgejob.XXXXXXXXXX`"\n'
+            ret += 'tmpdir="`mktemp -d job.XXXXXXXXXX`"\n'
             ret += "cd $tmpdir\n"
         return ret
 
@@ -668,6 +668,7 @@ class IclustJob(LsfJob):
         fn = "%s.sh.fail" % (self.jobName.split("/")[-1])
         ret += '    touch %s\n' % fn
         ret += 'fi\n'
+        ret += 'cd ../ && rm -r $tmpdir\n'
         return ret
 
     def copyProxy(self):
