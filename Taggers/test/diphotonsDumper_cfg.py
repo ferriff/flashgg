@@ -38,6 +38,9 @@ process.source = cms.Source("PoolSource",
 
 # Vittorio
 #"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/sethzenz/flashgg/RunIISpring15-ReReco74X-1_1_0-25ns/1_1_0/DoubleEG/RunIISpring15-ReReco74X-1_1_0-25ns-1_1_0-v0-Run2015D-04Dec2015-v2/160112_095813/0000/myMicroAODOutputFile_1.root"
+
+# Lucia
+"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/ferriff/flashgg/RunIIFall15DR76-1_3_0-25ns_ext1/1_3_1/GluGluHToGG_M125_13TeV_amcatnloFXFX_pythia8/RunIIFall15DR76-1_3_0-25ns_ext1-1_3_1-v0-RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12_ext2-v1/160127_023346/0000/myMicroAODOutputFile_1.root"
         )
 )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
@@ -201,7 +204,13 @@ cfgTools.addCategories(process.diphotonDumper,
                                   "gen_h_mass               := genP4.M",
                                   "gen_h_rapidity           := genP4.Rapidity",
                                   "gen_l_match              := leadingPhoton.genMatchType",
+                                  "gen_l_pt                 := leadingPhoton.matchedGenPhoton.pt",
+                                  "gen_l_eta                := leadingPhoton.matchedGenPhoton.eta",
+                                  "gen_l_phi                := leadingPhoton.matchedGenPhoton.phi",
                                   "gen_s_match              := subLeadingPhoton.genMatchType",
+                                  "gen_s_pt                 := subLeadingPhoton.matchedGenPhoton.pt",
+                                  "gen_s_eta                := subLeadingPhoton.matchedGenPhoton.eta",
+                                  "gen_s_phi                := subLeadingPhoton.matchedGenPhoton.phi",
                                   "minR9                    := min(leadingPhoton.r9,subLeadingPhoton.r9)",
                                   "maxEta                   := max(abs(leadingPhoton.superCluster.eta),abs(leadingPhoton.superCluster.eta))",
                                   ],
@@ -214,7 +223,7 @@ cfgTools.addCategories(process.diphotonDumper,
 
 
 from flashgg.MetaData.JobConfig import customize
-customize.setDefault("maxEvents", 20000)
+customize.setDefault("maxEvents", -1)
 customize.setDefault("targetLumi", 2.61e+3)
 #customize.setDefault("puTarget", '1.435e+05,6.576e+05,8.781e+05,1.304e+06,2.219e+06,5.052e+06,1.643e+07,6.709e+07,1.975e+08,3.527e+08,4.44e+08,4.491e+08,3.792e+08,2.623e+08,1.471e+08,6.79e+07,2.748e+07,1.141e+07,5.675e+06,3.027e+06,1.402e+06,5.119e+05,1.467e+05,3.53e+04,8270,2235,721.3,258.8,97.27,36.87,13.73,4.932,1.692,0.5519,0.1706,0.04994,0.01383,0.003627,0.0008996,0.0002111,4.689e-05,9.854e-06,1.959e-06,3.686e-07,6.562e-08,1.105e-08,1.762e-09,2.615e-10,4.768e-11,0,0,0')
 customize(process)
