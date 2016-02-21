@@ -40,11 +40,12 @@ process.source = cms.Source("PoolSource",
 #"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/sethzenz/flashgg/RunIISpring15-ReReco74X-1_1_0-25ns/1_1_0/DoubleEG/RunIISpring15-ReReco74X-1_1_0-25ns-1_1_0-v0-Run2015D-04Dec2015-v2/160112_095813/0000/myMicroAODOutputFile_1.root"
 
 # Lucia
-"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/ferriff/flashgg/RunIIFall15DR76-1_3_0-25ns_ext1/1_3_1/GluGluHToGG_M125_13TeV_amcatnloFXFX_pythia8/RunIIFall15DR76-1_3_0-25ns_ext1-1_3_1-v0-RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12_ext2-v1/160127_023346/0000/myMicroAODOutputFile_1.root"
+#"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/ferriff/flashgg/RunIIFall15DR76-1_3_0-25ns_ext1/1_3_1/GluGluHToGG_M125_13TeV_amcatnloFXFX_pythia8/RunIIFall15DR76-1_3_0-25ns_ext1-1_3_1-v0-RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12_ext2-v1/160127_023346/0000/myMicroAODOutputFile_1.root"
+"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/ferriff/flashgg/RunIIFall15DR76-1_3_0-25ns_ext1/1_3_1/GluGluHToGG_M-125_13TeV_powheg_pythia8/RunIIFall15DR76-1_3_0-25ns_ext1-1_3_1-v0-RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/160130_032602/0000/myMicroAODOutputFile_10.root"
         )
 )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
-process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32( 1 )
+process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32( 100 )
 process.options = cms.untracked.PSet( allowUnscheduled = cms.untracked.bool(True), wantSummary = cms.untracked.bool(True) )
 
 process.TFileService = cms.Service("TFileService",
@@ -65,6 +66,7 @@ process.flashggDiPhotonsScaled = cms.EDProducer('FlashggDiPhotonSystematicProduc
                                                                NSigmas = cms.vint32(0,0),
                                                                OverallRange = cms.string("1"),
                                                                BinList = smearBinsRereco,
+                                                               ApplyCentralValue = cms.bool(True),
                                                                Debug = cms.untracked.bool(False)),
                                                       cms.PSet( PhotonMethodName = cms.string("FlashggPhotonScale"),
                                                                MethodName = cms.string("FlashggDiPhotonFromPhoton"),
@@ -72,7 +74,7 @@ process.flashggDiPhotonsScaled = cms.EDProducer('FlashggDiPhotonSystematicProduc
                                                                NSigmas = cms.vint32(0,0),
                                                                OverallRange = cms.string("1"),
                                                                BinList = scaleBinsRereco,
-                                                               NoCentralShift = cms.bool(False),
+                                                               ApplyCentralValue = cms.bool(True),
                                                                Debug = cms.untracked.bool(False))
                                               ))
 
@@ -89,6 +91,7 @@ process.flashggDiPhotonsSmeared = cms.EDProducer('FlashggDiPhotonSystematicProdu
                                                                  NSigmas = cms.vint32(0,0),
                                                                  OverallRange = cms.string("1"),
                                                                  BinList = smearBinsRereco,
+                                                                 ApplyCentralValue = cms.bool(True),
                                                                  Debug = cms.untracked.bool(False)),
                                                         cms.PSet( PhotonMethodName = cms.string("FlashggPhotonSmearConstant"),
                                                                  MethodName = cms.string("FlashggDiPhotonFromPhoton"),
@@ -103,6 +106,7 @@ process.flashggDiPhotonsSmeared = cms.EDProducer('FlashggDiPhotonSystematicProdu
                                                                  #           or in flashgg/MicroAOD/python/flashggRandomizedPhotonProducer_cff.py (if at MicroAOD prod.)
                                                                  RandomLabel = cms.string("rnd_g_E"),
                                                                  Debug = cms.untracked.bool(False),
+                                                                 ApplyCentralValue = cms.bool(True),
                                                                  ExaggerateShiftUp = cms.bool(False)),
                                                 ))
 
@@ -123,19 +127,40 @@ process.kinPreselDiPhotons = flashggPreselectedDiPhotons.clone(
     categories = cms.VPSet()
 )
 
-process.load("flashgg.Taggers.diphotonDumper_cfi") ##  import diphotonDumper 
+#############process.load("flashgg.Taggers.diphotonDumper_cfi") ##  import diphotonDumper 
+#############import flashgg.Taggers.dumperConfigTools as cfgTools
+##############process.diphotonDumper.src = "kinPreselDiPhotons"
+#############process.diphotonDumper.src = "flashggDiPhotons"
+#############process.diphotonDumper.dumpTrees = True
+#############process.diphotonDumper.dumpWorkspace = False
+#############process.diphotonDumper.quietRooFit = True
+#############process.diphotonDumper.maxCandPerEvent = -1 # take them all
+#############process.diphotonDumper.nameTemplate ="$PROCESS_$SQRTS_$LABEL"
+############## split tree, histogram and datasets by process
+##############process.diphotonDumper.nameTemplate ="$PROCESS_$SQRTS_$LABEL_$SUBCAT"
+############### do not split by process
+############### process.diphotonDumper.nameTemplate = "minitree_$SQRTS_$LABEL_$SUBCAT"
+
 import flashgg.Taggers.dumperConfigTools as cfgTools
-#process.diphotonDumper.src = "kinPreselDiPhotons"
-process.diphotonDumper.src = "flashggDiPhotons"
+
+#process.load("flashgg.Taggers.flashggDiPhotonMVA_cfi")
+#process.load("flashgg.Taggers.flashggTags_cff")
+#process.load("flashgg.Taggers.flashggUpdatedIdMVADiPhotons_cfi")
+process.load("flashgg/Taggers/flashggTagSequence_cfi")
+process.flashggDiPhotonMVA.DiPhotonTag = "flashggDiPhotons"
+process.flashggUntagged.Boundaries = cms.vdouble(-2)
+
+from flashgg.Taggers.tagsDumpers_cfi import createTagDumper
+process.diphotonDumper = createTagDumper("UntaggedTag")
+process.diphotonDumper.src = "flashggUntagged"
+process.diphotonDumper.maxCandPerEvent = -1 # take them all
+process.diphotonDumper.splitLumiWeight=cms.untracked.bool(True)
 process.diphotonDumper.dumpTrees = True
 process.diphotonDumper.dumpWorkspace = False
 process.diphotonDumper.quietRooFit = True
-process.diphotonDumper.maxCandPerEvent = -1 # take them all
 process.diphotonDumper.nameTemplate ="$PROCESS_$SQRTS_$LABEL"
-# split tree, histogram and datasets by process
-#process.diphotonDumper.nameTemplate ="$PROCESS_$SQRTS_$LABEL_$SUBCAT"
-## do not split by process
-## process.diphotonDumper.nameTemplate = "minitree_$SQRTS_$LABEL_$SUBCAT"
+
+
 
 ## define categories and associated objects to dump
 cfgTools.addCategory(process.diphotonDumper,
@@ -159,67 +184,67 @@ cfgTools.addCategories(process.diphotonDumper,
                        [("all", "1", 0)],
                        ## variables to be dumped in trees/datasets. Same variables for all categories
                        ## if different variables wanted for different categories, can add categorie one by one with cfgTools.addCategory
-                       variables=["CMS_hgg_mass[320,100,180]  := mass", 
-                                  "l_pt                     := leadingPhoton.pt",
-                                  "s_pt                     := subLeadingPhoton.pt",
-                                  "l_eta                    := leadingPhoton.eta",
-                                  "s_eta                    := subLeadingPhoton.eta",
-                                  "l_phi                    := leadingPhoton.phi",
-                                  "s_phi                    := subLeadingPhoton.phi",
-                                  "l_ptOMgg                 := leadingPhoton.pt / mass",
-                                  "s_ptOMgg                 := subLeadingPhoton.pt / mass",
-                                  "l_IdMva                  := leadingView.phoIdMvaWrtChosenVtx",
-                                  "s_IdMva                  := subLeadingView.phoIdMvaWrtChosenVtx",
-                                  "l_r9                     := leadingPhoton.full5x5_r9",
-                                  "s_r9                     := subLeadingPhoton.full5x5_r9",
-                                  "l_sieie                  := leadingPhoton.full5x5_sigmaIetaIeta",
-                                  "s_sieie                  := subLeadingPhoton.full5x5_sigmaIetaIeta",
-                                  "l_egChIso                := leadingPhoton.egChargedHadronIso",
-                                  "s_egChIso                := subLeadingPhoton.egChargedHadronIso",
-                                  "l_egNhIso                := leadingPhoton.egNeutralHadronIso",
-                                  "s_egNhIso                := subLeadingPhoton.egNeutralHadronIso",
-                                  "l_egPhIso                := leadingPhoton.egPhotonIso",
-                                  "s_egPhIso                := subLeadingPhoton.egPhotonIso",
-                                  "l_scEta                  := leadingPhoton.superCluster.eta",
-                                  "s_scEta                  := subLeadingPhoton.superCluster.eta",
-                                  "l_scPhi                  := leadingPhoton.superCluster.phi",
-                                  "s_scPhi                  := subLeadingPhoton.superCluster.phi",
-                                  "l_phoID                  := leadPhotonId",
-                                  "s_phoID                  := subLeadPhotonId",
-                                  "l_hoe                    := leadingPhoton.hadronicOverEm",
-                                  "s_hoe                    := subLeadingPhoton.hadronicOverEm",
-                                  "l_hadTowOverEm           := leadingPhoton.hadTowOverEm",
-                                  "s_hadTowOverEm           := subLeadingPhoton.hadTowOverEm",
-                                  "l_passElVeto             := leadingPhoton.passElectronVeto",
-                                  "s_passElVeto             := subLeadingPhoton.passElectronVeto",
-                                  "l_trkSumPtHollowConeDR03 := leadingPhoton.trkSumPtHollowConeDR03",
-                                  "s_trkSumPtHollowConeDR03 := subLeadingPhoton.trkSumPtHollowConeDR03",
-                                  "vtx_x                    := vtx.x",
-                                  "vtx_y                    := vtx.y",
-                                  "vtx_z                    := vtx.z",
-                                  "vtx_ndof                 := vtx.ndof",
-                                  "gen_h_pt                 := genP4.pt",
-                                  "gen_h_eta                := genP4.eta",
-                                  "gen_h_phi                := genP4.phi",
-                                  "gen_h_mass               := genP4.M",
-                                  "gen_h_rapidity           := genP4.Rapidity",
-                                  "gen_l_match              := leadingPhoton.genMatchType",
-                                  "gen_l_pt                 := leadingPhoton.matchedGenPhoton.pt",
-                                  "gen_l_eta                := leadingPhoton.matchedGenPhoton.eta",
-                                  "gen_l_phi                := leadingPhoton.matchedGenPhoton.phi",
-                                  "gen_s_match              := subLeadingPhoton.genMatchType",
-                                  "gen_s_pt                 := subLeadingPhoton.matchedGenPhoton.pt",
-                                  "gen_s_eta                := subLeadingPhoton.matchedGenPhoton.eta",
-                                  "gen_s_phi                := subLeadingPhoton.matchedGenPhoton.phi",
-                                  "minR9                    := min(leadingPhoton.r9,subLeadingPhoton.r9)",
-                                  "maxEta                   := max(abs(leadingPhoton.superCluster.eta),abs(leadingPhoton.superCluster.eta))",
+                       variables=["CMS_hgg_mass[320,100,180] := diPhoton.mass",
+                       "l_pt                                 := diPhoton.leadingPhoton.pt",
+                       "s_pt                                 := diPhoton.subLeadingPhoton.pt",
+                       "l_eta                                := diPhoton.leadingPhoton.eta",
+                       "s_eta                                := diPhoton.subLeadingPhoton.eta",
+                       "l_phi                                := diPhoton.leadingPhoton.phi",
+                       "s_phi                                := diPhoton.subLeadingPhoton.phi",
+                       "l_ptOMgg                             := diPhoton.leadingPhoton.pt / diPhoton.mass",
+                       "s_ptOMgg                             := diPhoton.subLeadingPhoton.pt / diPhoton.mass",
+                       "l_IdMva                              := diPhoton.leadingView.phoIdMvaWrtChosenVtx",
+                       "s_IdMva                              := diPhoton.subLeadingView.phoIdMvaWrtChosenVtx",
+                       "l_r9                                 := diPhoton.leadingPhoton.full5x5_r9",
+                       "s_r9                                 := diPhoton.subLeadingPhoton.full5x5_r9",
+                       "l_sieie                              := diPhoton.leadingPhoton.full5x5_sigmaIetaIeta",
+                       "s_sieie                              := diPhoton.subLeadingPhoton.full5x5_sigmaIetaIeta",
+                       "l_egChIso                            := diPhoton.leadingPhoton.egChargedHadronIso",
+                       "s_egChIso                            := diPhoton.subLeadingPhoton.egChargedHadronIso",
+                       "l_egNhIso                            := diPhoton.leadingPhoton.egNeutralHadronIso",
+                       "s_egNhIso                            := diPhoton.subLeadingPhoton.egNeutralHadronIso",
+                       "l_egPhIso                            := diPhoton.leadingPhoton.egPhotonIso",
+                       "s_egPhIso                            := diPhoton.subLeadingPhoton.egPhotonIso",
+                       "l_scEta                              := diPhoton.leadingPhoton.superCluster.eta",
+                       "s_scEta                              := diPhoton.subLeadingPhoton.superCluster.eta",
+                       "l_scPhi                              := diPhoton.leadingPhoton.superCluster.phi",
+                       "s_scPhi                              := diPhoton.subLeadingPhoton.superCluster.phi",
+                       "l_phoID                              := diPhoton.leadPhotonId",
+                       "s_phoID                              := diPhoton.subLeadPhotonId",
+                       "l_hoe                                := diPhoton.leadingPhoton.hadronicOverEm",
+                       "s_hoe                                := diPhoton.subLeadingPhoton.hadronicOverEm",
+                       "l_hadTowOverEm                       := diPhoton.leadingPhoton.hadTowOverEm",
+                       "s_hadTowOverEm                       := diPhoton.subLeadingPhoton.hadTowOverEm",
+                       "l_passElVeto                         := diPhoton.leadingPhoton.passElectronVeto",
+                       "s_passElVeto                         := diPhoton.subLeadingPhoton.passElectronVeto",
+                       "l_trkSumPtHollowConeDR03             := diPhoton.leadingPhoton.trkSumPtHollowConeDR03",
+                       "s_trkSumPtHollowConeDR03             := diPhoton.subLeadingPhoton.trkSumPtHollowConeDR03",
+                       "vtx_x                                := diPhoton.vtx.x",
+                       "vtx_y                                := diPhoton.vtx.y",
+                       "vtx_z                                := diPhoton.vtx.z",
+                       "vtx_ndof                             := diPhoton.vtx.ndof",
+                       "gen_h_pt                             := diPhoton.genP4.pt",
+                       "gen_h_eta                            := diPhoton.genP4.eta",
+                       "gen_h_phi                            := diPhoton.genP4.phi",
+                       "gen_h_mass                           := diPhoton.genP4.M",
+                       "gen_h_rapidity                       := diPhoton.genP4.Rapidity",
+                       "gen_l_match                          := diPhoton.leadingPhoton.genMatchType",
+                       "gen_l_pt                             := ? diPhoton.leadingPhoton.hasMatchedGenPhoton ? diPhoton.leadingPhoton.matchedGenPhoton.pt : -999",
+                       "gen_l_eta                            := ? diPhoton.leadingPhoton.hasMatchedGenPhoton ? diPhoton.leadingPhoton.matchedGenPhoton.eta : -999",
+                       "gen_l_phi                            := ? diPhoton.leadingPhoton.hasMatchedGenPhoton ? diPhoton.leadingPhoton.matchedGenPhoton.phi : -999",
+                       "gen_s_match                          := diPhoton.subLeadingPhoton.genMatchType",
+                       "gen_s_pt                             := ? diPhoton.subLeadingPhoton.hasMatchedGenPhoton ? diPhoton.subLeadingPhoton.matchedGenPhoton.pt : -999",
+                       "gen_s_eta                            := ? diPhoton.subLeadingPhoton.hasMatchedGenPhoton ? diPhoton.subLeadingPhoton.matchedGenPhoton.eta : -999",
+                       "gen_s_phi                            := ? diPhoton.subLeadingPhoton.hasMatchedGenPhoton ? diPhoton.subLeadingPhoton.matchedGenPhoton.phi : -999",
+                       "minR9                                := min(diPhoton.leadingPhoton.r9,diPhoton.subLeadingPhoton.r9)",
+                       "maxEta                               := max(abs(diPhoton.leadingPhoton.superCluster.eta),abs(diPhoton.leadingPhoton.superCluster.eta))",
+                       "diphMVA                              := diPhotonMVA.mvaValue",
+                       "diphVtxProb                          := diPhotonMVA.vtxprob",
                                   ],
                        ## histograms to be plotted. 
                        ## the variables need to be defined first
                        histograms=[ ]
                        )
-
-
 
 
 from flashgg.MetaData.JobConfig import customize
@@ -231,14 +256,18 @@ customize(process)
 print "processType:", customize.processType, "processId:", customize.processId
 
 if customize.processType == 'data':
+        print 'data'
         process.kinPreselDiPhotons.src = "flashggDiPhotonsScaled"
-        process.diphotonDumper.src = "flashggDiPhotonsScaled" ################# FIXME
+        #process.diphotonDumper.src = "flashggDiPhotonsScaled" ################# FIXME
         #process.diphotonDumper.src = "flashggDiPhotons"
+        process.flashggUntagged.DiPhotonTag = "flashggDiPhotonsScaled" ################# FIXME
         #process.p = cms.Path( process.hltHighLevel * process.kinPreselDiPhotons * process.diphotonDumper )
-        process.p = cms.Path( process.hltHighLevel * process.diphotonDumper )
+        process.p = cms.Path( process.hltHighLevel * process.flashggDiPhotonMVA * process.diphotonDumper )
 else:
+        print 'not data'
         process.kinPreselDiPhotons.src = "flashggDiPhotonsSmeared"
-        process.diphotonDumper.src = "flashggDiPhotonsSmeared" ################# FIXME
+        #process.diphotonDumper.src = "flashggDiPhotonsSmeared" ################# FIXME
         #process.diphotonDumper.src = "flashggDiPhotons"
+        process.flashggUntagged.DiPhotonTag = "flashggDiPhotonsSmeared" ################# FIXME
         process.diphotonDumper.globalVariables.puReWeight = True
-        process.p = cms.Path( process.diphotonDumper )
+        process.p = cms.Path( process.flashggDiPhotonMVA * process.diphotonDumper )
