@@ -82,6 +82,10 @@ typedef struct Event {
         Float_t         vtx_y;
         Float_t         vtx_z;
         Float_t         weight;
+        Double_t        lumiFactor;
+        Float_t         puweight;
+        Float_t         diphMVA;
+        Bool_t          hlt_singleEle;
 } Event;
 
 Event e;
@@ -146,6 +150,12 @@ void set_adresses(TChain & c)
         c.SetBranchAddress("vtx_y", &e.vtx_y);
         c.SetBranchAddress("vtx_z", &e.vtx_z);
         c.SetBranchAddress("weight", &e.weight);
+        c.SetBranchAddress("lumiFactor", &e.lumiFactor);
+        c.SetBranchAddress("diphMVA", &e.diphMVA);
+        if (!TString(c.GetName()).Contains("data")) c.SetBranchAddress("puweight", &e.puweight);
+        else {
+                c.SetBranchAddress("HLT_Ele22_eta2p1_WPLoose_Gsf_v", &e.hlt_singleEle);
+        }
 }
 
 
@@ -426,14 +436,15 @@ bool flashgg_preselection()
 {
         bool presel = 
            (e.l_r9 > 0.8 || e.l_egChIso < 20 || e.l_egChIso / e.l_pt < 0.3)
-        && (e.s_r9 >0.8 || e.s_egChIso < 20 || e.s_egChIso / e.s_pt < 0.3)
+        && (e.s_r9 > 0.8 || e.s_egChIso < 20 || e.s_egChIso / e.s_pt < 0.3)
         //&& (e.l_hadTowOverEm < 0.08 && e.s_hadTowOverEm < 0.08)
         && (e.l_hoe < 0.08 && e.s_hoe < 0.08)
         && (e.l_pt > 30. && e.s_pt > 20.0)
         && (fabs(e.l_scEta) < 2.5    && fabs(e.s_scEta) < 2.5)
         && (fabs(e.l_scEta) < 1.4442 || fabs(e.l_scEta) > 1.566)
         && (fabs(e.s_scEta) < 1.4442 || fabs(e.s_scEta) > 1.566)
-        && (e.l_IdMva > -0.9 && e.s_IdMva > -0.9);
+        && (e.l_IdMva > -0.9 && e.s_IdMva > -0.9)
+        ;
 
         // leading
         bool lead    = (isEB(e.l_scEta) && ((e.l_r9 < 0.85 && e.l_egPhIso < 4. && e.l_sieie < 0.015 && e.l_trkSumPtHollowConeDR03 < 6.) || (e.l_r9 >= 0.85)))
@@ -451,6 +462,7 @@ Double_t process_events(TChain & c, SelectionCounter & s)
         auto nentries = c.GetEntries();
         auto name = TString(c.GetName()).ReplaceAll("/", "_");
 
+        bool dy   = TString(c.GetName()).Contains("DYJets");
         bool qcd  = TString(c.GetName()).Contains("QCD");
         bool gjet = TString(c.GetName()).Contains("GJet");
         bool data = TString(c.GetName()).Contains("data");
@@ -462,11 +474,49 @@ Double_t process_events(TChain & c, SelectionCounter & s)
         h_name = "h_" + name + "_nvtx_selected";
         auto h_nvtx_final = (TH1D*)h_nvtx_all->Clone(h_name);
 
-        h_name = "h_" + name + "_mass_all";
-        TH1D * h_mass_all = new TH1D(h_name, h_name, 100, 80, 180);
+        h_name = "h_" + name + "_mass_inclusive_all";
+        TH1D * h_mass_all = new TH1D(h_name, h_name, 260, 50, 180);
 
-        h_name = "h_" + name + "_mass_selected";
+        h_name = "h_" + name + "_mass_inclusive_selected";
         auto h_mass_final = (TH1D*)h_mass_all->Clone(h_name);
+
+        h_name = "h_" + name + "_mass_ebeb_selected";
+        auto h_mass_ebeb_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_ebeb_hr9_selected";
+        auto h_mass_ebeb_hr9_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_ebeb_lr9_selected";
+        auto h_mass_ebeb_lr9_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_ebeb_nothr9_selected";
+        auto h_mass_ebeb_nothr9_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_notebeb_hr9_selected";
+        auto h_mass_notebeb_hr9_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_notebeb_nothr9_selected";
+        auto h_mass_notebeb_nothr9_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_ebee_selected";
+        auto h_mass_ebee_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_ebee_hr9_selected";
+        auto h_mass_ebee_hr9_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_ebee_lr9_selected";
+        auto h_mass_ebee_lr9_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_eeee_selected";
+        auto h_mass_eeee_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_eeee_hr9_selected";
+        auto h_mass_eeee_hr9_final = (TH1D*)h_mass_all->Clone(h_name);
+        h_name = "h_" + name + "_mass_eeee_lr9_selected";
+        auto h_mass_eeee_lr9_final = (TH1D*)h_mass_all->Clone(h_name);
+
+        h_name = "h_" + name + "_l_r9_all";
+        TH1D * h_l_r9_all = new TH1D(h_name, h_name, 1000, 0., 1.);
+        h_name = "h_" + name + "_s_r9_all";
+        auto h_s_r9_all = (TH1D*)h_l_r9_all->Clone(h_name);
+        h_name = "h_" + name + "_l_r9_selected";
+        auto h_l_r9_final = (TH1D*)h_l_r9_all->Clone(h_name);
+        h_name = "h_" + name + "_s_r9_selected";
+        auto h_s_r9_final = (TH1D*)h_l_r9_all->Clone(h_name);
+        h_name = "h_" + name + "_eb_r9_selected";
+        auto h_eb_r9_final = (TH1D*)h_l_r9_all->Clone(h_name);
+        h_name = "h_" + name + "_ee_r9_selected";
+        auto h_ee_r9_final = (TH1D*)h_l_r9_all->Clone(h_name);
 
         /*
         h_name = "h_" + name + "_mass_selected";
@@ -487,7 +537,7 @@ Double_t process_events(TChain & c, SelectionCounter & s)
 
         bool one_pass = false;
         TBits bits;
-        //nentries = 100000;
+        //nentries = 100;
         Double_t tot = 0.;
         for (auto iev = 0; iev < nentries; iev += PRESCALE) {
                 if (iev && iev % 23456 == 0) fprintf(stderr, "analyzed events: % 15d  (%.2f)  -  %s\r", iev, iev * 100. / nentries, c.GetName());
@@ -500,14 +550,23 @@ Double_t process_events(TChain & c, SelectionCounter & s)
                         bits.ResetAllBits();
                 }
                 if (one_pass) continue;
+                if (data) e.puweight = 1.;
+                else {
+                        e.hlt_singleEle = kTRUE;
+                }
                 if ((qcd || gjet) && e.gen_l_match == 1 && e.gen_s_match == 1) continue;
 
-                auto w = e.weight * PRESCALE;
+                auto w = e.weight * e.lumiFactor * PRESCALE;
                 //auto w = 1.; // FIXME
+
+                // HLT requirement
+                if (data && !e.hlt_singleEle) continue;
 
                 if ( check_bit(bits, sel++) ) {
                         s["trigger"] += w;
                         h_nvtx_all->Fill(e.nvtx, w);
+                        h_l_r9_all->Fill(e.l_r9, w);
+                        h_s_r9_all->Fill(e.s_r9, w);
                         if (e.CMS_hgg_mass < 115 || e.CMS_hgg_mass > 135 || !data) h_mass_all->Fill(e.CMS_hgg_mass, w);
                 }
 
@@ -538,7 +597,9 @@ Double_t process_events(TChain & c, SelectionCounter & s)
                 if(!flashgg_preselection()) continue;
                 if ( check_bit(bits, sel++) ) s["flashgg_presel"] += w;
 
-                if (!( e.l_passElVeto && e.s_passElVeto )) continue;
+                if (!( (!dy && e.l_passElVeto && e.s_passElVeto) || (dy && !e.l_passElVeto && !e.s_passElVeto) )) continue;
+                // for Z control plots remove it for data and MC
+                //if (!( not e.l_passElVeto && not e.s_passElVeto )) continue;
                 if ( check_bit(bits, sel++) ) s["csev"] += w;
 
                 // already in flashgg_preselection()
@@ -552,15 +613,43 @@ Double_t process_events(TChain & c, SelectionCounter & s)
                 //if ( ! vtx_sel() ) continue;
                 //if ( check_bit(bits, sel++) ) s["vtx"] += w;
 
-                if (!( e.CMS_hgg_mass > 100 && e.CMS_hgg_mass < 180 )) continue;
+                //if (!(e.diphMVA <= -0.29)) continue;
+                //if ( check_bit(bits, sel++) ) s["diphoton_MVA"] += w;
+
+                //if (!( e.CMS_hgg_mass > 100 && e.CMS_hgg_mass < 180 )) continue;
+                //if ( check_bit(bits, sel++) ) s["mass_window"] += w;
+                if (!( e.CMS_hgg_mass > 70 && e.CMS_hgg_mass < 110 )) continue;
                 if ( check_bit(bits, sel++) ) s["mass_window"] += w;
 
                 //std::cout<<"run: "<<e.run<<" event: "<<e.event<<" mass: "<<e.CMS_hgg_mass<<std::endl;
-
                 //std::cout<<"--> run: "<<e.run<<" event: "<<e.event<<" mass: "<<e.CMS_hgg_mass<<std::endl;
 
                 h_nvtx_final->Fill(e.nvtx, w);
+                h_l_r9_final->Fill(e.l_r9, w);
+                h_s_r9_final->Fill(e.s_r9, w);
+                if (isEB(e.l_scEta)) h_eb_r9_final->Fill(e.l_r9, w);
+                else                 h_ee_r9_final->Fill(e.l_r9, w);
+                if (isEB(e.s_scEta)) h_eb_r9_final->Fill(e.s_r9, w);
+                else                 h_ee_r9_final->Fill(e.s_r9, w);
 
+                if (isEBEB(e.l_scEta, e.s_scEta)) {
+                        h_mass_ebeb_final->Fill(e.CMS_hgg_mass, w);
+                        if (e.l_r9 >  0.94 && e.s_r9 >  0.94) h_mass_ebeb_hr9_final->Fill(e.CMS_hgg_mass, w);
+                        else                                  h_mass_ebeb_nothr9_final->Fill(e.CMS_hgg_mass, w);
+                        if (e.l_r9 <= 0.94 && e.s_r9 <= 0.94) h_mass_ebeb_lr9_final->Fill(e.CMS_hgg_mass, w);
+                } else if (isEEEE(e.l_scEta, e.s_scEta)) {
+                        h_mass_eeee_final->Fill(e.CMS_hgg_mass, w);
+                        if (e.l_r9 >  0.94 && e.s_r9 >  0.94) h_mass_eeee_hr9_final->Fill(e.CMS_hgg_mass, w);
+                        if (e.l_r9 <= 0.94 && e.s_r9 <= 0.94) h_mass_eeee_lr9_final->Fill(e.CMS_hgg_mass, w);
+                } else {
+                        h_mass_ebee_final->Fill(e.CMS_hgg_mass, w);
+                        if (e.l_r9 >  0.94 && e.s_r9 >  0.94) h_mass_ebee_hr9_final->Fill(e.CMS_hgg_mass, w);
+                        if (e.l_r9 <= 0.94 && e.s_r9 <= 0.94) h_mass_ebee_lr9_final->Fill(e.CMS_hgg_mass, w);
+                }
+                if (!isEBEB(e.l_scEta, e.s_scEta)) {
+                        if (e.l_r9 >  0.94 && e.s_r9 >  0.94) h_mass_notebeb_hr9_final->Fill(e.CMS_hgg_mass, w);
+                        else                                  h_mass_notebeb_nothr9_final->Fill(e.CMS_hgg_mass, w);
+                }
                 if (e.CMS_hgg_mass < 115 || e.CMS_hgg_mass > 135 || !data) h_mass_final->Fill(e.CMS_hgg_mass, w);
 
                 /* // turnon simulation
@@ -598,52 +687,23 @@ Double_t process_events(TChain & c, SelectionCounter & s)
 int main()
 {
         std::vector<std::pair<std::unique_ptr<TChain>, std::string> > trees;
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all")), "../../../prod/data_DoubleEG_v5/output_*.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all")), "../../../prod/data_DoubleEG_noMissing_v5/output_*.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_all_candidates_myMicroAODOutputFile_1.root" ) );
 
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_all_candidates_myMicroAODOutputFile_1_synchronized.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_all_candidates_myMicroAODOutputFile_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all")), "output_numEvent20000.root" ) );
-
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all"))                               , "../../../prod/data_DoubleEG_noMissing_noEta_allCand_genH_v5/output_DoubleEG_sethzenz-RunIISpring15-ReReco74X-1_1_0-25ns-1_1_0-v0-Run2015D-04Dec2015-v2-7b05e4f729d8444b2665263390b46268_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DYJetsToLL_13TeV_all"))                         , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-748ef385cc6ef4f4034502994d21f875_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DiPhotonJetsBox_MGG_80toInf_13TeV_all"))        , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_DiPhotonJetsBox_MGG-80toInf_13TeV-Sherpa_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-1dcddfee0e864097610b753d4c65f8a9_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_20to40_13TeV_all"))                     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCUETP8M1_13TeV_Pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-1dcddfee0e864097610b753d4c65f8a9_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_40toInf_13TeV_all"))                    , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf_TuneCUETP8M1_13TeV_Pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-1dcddfee0e864097610b753d4c65f8a9_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_30to40_MGG_80toInf_13TeV_all"))          , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCUETP8M1_13TeV_Pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-1dcddfee0e864097610b753d4c65f8a9_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_30toInf_MGG_40to80_13TeV_all"))          , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCUETP8M1_13TeV_Pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-1dcddfee0e864097610b753d4c65f8a9_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_40toInf_MGG_80toInf_13TeV_all"))         , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf_TuneCUETP8M1_13TeV_Pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-1dcddfee0e864097610b753d4c65f8a9_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GluGluHToGG_M_125_13TeV_powheg_13TeV_all"))     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_GluGluHToGG_M-125_13TeV_powheg_pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-c123302c25ee4982d08a033b33852c44_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VBFHToGG_M_125_13TeV_powheg_13TeV_all"))        , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_VBFHToGG_M-125_13TeV_powheg_pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-c123302c25ee4982d08a033b33852c44_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VHToGG_M125_13TeV_amcatnloFXFX_13TeV_all"))     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_VHToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-c123302c25ee4982d08a033b33852c44_USER_1.root" ) );
-        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/ttHJetToGG_M125_13TeV_amcatnloFXFX_13TeV_all")) , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5/output_ttHJetToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8_sethzenz-RunIISpring15-ReMiniAOD-1_1_0-25ns-1_1_0-v0-RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1-c123302c25ee4982d08a033b33852c44_USER_1.root" ) );
-
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all"))                               , "../../../prod/data_DoubleEG_noMissing_noEta_allCand_genH_v5/output_*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DYJetsToLL_13TeV_all"))                         , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_DYJetsToLL*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DiPhotonJetsBox_MGG_80toInf_13TeV_all"))        , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_DiPhotonJetsBox_MGG-80toInf*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_20to40_13TeV_all"))                     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_GJet_Pt-20to40*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_40toInf_13TeV_all"))                    , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_GJet_Pt-40toInf*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_30to40_MGG_80toInf_13TeV_all"))          , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_QCD_Pt-30to40*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_30toInf_MGG_40to80_13TeV_all"))          , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_QCD_Pt-30toInf*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_40toInf_MGG_80toInf_13TeV_all"))         , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_QCD_Pt-40toInf*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GluGluHToGG_M_125_13TeV_powheg_13TeV_all"))     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_GluGluHToGG_M-125_13TeV_powheg*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VBFHToGG_M_125_13TeV_powheg_13TeV_all"))        , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_VBFHToGG_M-125_13TeV_powheg*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VHToGG_M125_13TeV_amcatnloFXFX_13TeV_all"))     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_VHToGG_M125_13TeV_amcatnloFXFX*.root" ) );
-        ///trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/ttHJetToGG_M125_13TeV_amcatnloFXFX_13TeV_all")) , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v5//output_ttHJetToGG_M125_13TeV_amcatnloFXFX*.root" ) );
-
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all"))                               , "../../../prod/data_DoubleEG_noMissing_noEta_allCand_genH_v6/output_*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DYJetsToLL_13TeV_all"))                         , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_DYJetsToLL*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DiPhotonJetsBox_MGG_80toInf_13TeV_all"))        , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_DiPhotonJetsBox_MGG-80toInf*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_20to40_13TeV_all"))                     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_GJet_Pt-20to40*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_40toInf_13TeV_all"))                    , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_GJet_Pt-40toInf*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_30to40_MGG_80toInf_13TeV_all"))          , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_QCD_Pt-30to40*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_30toInf_MGG_40to80_13TeV_all"))          , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_QCD_Pt-30toInf*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_40toInf_MGG_80toInf_13TeV_all"))         , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_QCD_Pt-40toInf*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GluGluHToGG_M_125_13TeV_powheg_13TeV_all"))     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_GluGluHToGG_M-125_13TeV_powheg*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VBFHToGG_M_125_13TeV_powheg_13TeV_all"))        , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_VBFHToGG_M-125_13TeV_powheg*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VHToGG_M125_13TeV_amcatnloFXFX_13TeV_all"))     , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_VHToGG_M125_13TeV_amcatnloFXFX*.root" ) );
-        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/ttHJetToGG_M125_13TeV_amcatnloFXFX_13TeV_all")) , "../../../prod/mc_SandB_noMissing_noEta_allCand_genH_v6//output_ttHJetToGG_M125_13TeV_amcatnloFXFX*.root" ) );
+        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all"))                               , "../../../prod/data_run-dep-scales_and_smearings/output_*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/data_13TeV_all"))                               , "../../../prod/data_test/output_*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GluGluHToGG_M_125_13TeV_amcatnlo_13TeV_all"))     , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_GluGluHToGG_M125_13TeV_amcatnloFXFX_pythia8*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VBFHToGG_M_125_13TeV_amcatnlo_13TeV_all"))        , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_VBFHToGG_M125_13TeV_amcatnlo_pythia8*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VHToGG_M125_13TeV_amcatnloFXFX_13TeV_all"))     , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_VHToGG_M125_13TeV_amcatnloFXFX*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/ttHJetToGG_M125_13TeV_amcatnloFXFX_13TeV_all")) , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_ttHJetToGG_M125_13TeV_amcatnloFXFX*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DYJetsToLL_13TeV_all"))                         , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_DYJetsToLL*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/DiPhotonJetsBox_MGG_80toInf_amcatnlo_13TeV_all"))        , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_DiPhotonJets_MGG-80toInf_13TeV_amcatnloFXFX_pythia8*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_20to40_MGG_80toInf_13TeV_all"))                     , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_GJet_Pt-20to40*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt_40toInf_MGG_80toInf_13TeV_all"))                    , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_GJet_Pt-40toInf*.root" ) );
+        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GJet_Pt-20toInf_MGG-40to80_13TeV_all"))                    , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_GJet_Pt-20toInf*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_30to40_MGG_80toInf_13TeV_all"))          , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_QCD_Pt-30to40*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_30toInf_MGG_40to80_13TeV_all"))          , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_QCD_Pt-30toInf*.root" ) );
+        trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/QCD_Pt_40toInf_MGG_80toInf_13TeV_all"))         , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_QCD_Pt-40toInf*.root" ) );
+        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/GluGluHToGG_M_125_13TeV_powheg_13TeV_all"))     , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_GluGluHToGG_M-125_13TeV_powheg*.root" ) );
+        //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/VBFHToGG_M_125_13TeV_powheg_13TeV_all"))        , "../../../prod/mc_SandB_run-dep-scales_and_smearings/output_VBFHToGG_M-125_13TeV_powheg*.root" ) );
 
         // Vittorio
         //trees.push_back( std::make_pair( std::unique_ptr<TChain>(new TChain("diphotonDumper/trees/_13TeV_all"))                               , "output_numEvent20000.root" ) );
