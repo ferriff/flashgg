@@ -115,7 +115,14 @@ def customizePhotonSystematicsForData(process):
             pset.ApplyCentralValue = cms.bool(True) # Turn on central shift for data (it is off for MC)
             pset.NSigmas = cms.vint32() # Do not perform shift
             newvpset += [pset]
+    newvpset2D = cms.VPSet()
+    #for pset in process.flashggDiPhotonSystematics.SystMethods2D:
+    #    if pset.Label.value().count("MCSmear"):
+    #        pset.ApplyCentralValue = cms.bool(False) # Turn on central shift for data (it is off for MC)
+    #        pset.NSigmas = cms.vint32() # Do not perform shift
+    #        newvpset2D += [pset]
     process.flashggDiPhotonSystematics.SystMethods = newvpset
+    process.flashggDiPhotonSystematics.SystMethods2D = newvpset2D
 
 def customizeLeptonSystematicsForData(process):
     # Remove systematics entirely

@@ -41,7 +41,10 @@ process.source = cms.Source("PoolSource",
 
 # Lucia
 #"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/ferriff/flashgg/RunIIFall15DR76-1_3_0-25ns_ext1/1_3_1/GluGluHToGG_M125_13TeV_amcatnloFXFX_pythia8/RunIIFall15DR76-1_3_0-25ns_ext1-1_3_1-v0-RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12_ext2-v1/160127_023346/0000/myMicroAODOutputFile_1.root"
-"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/ferriff/flashgg/RunIIFall15DR76-1_3_0-25ns_ext1/1_3_1/GluGluHToGG_M-125_13TeV_powheg_pythia8/RunIIFall15DR76-1_3_0-25ns_ext1-1_3_1-v0-RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/160130_032602/0000/myMicroAODOutputFile_10.root"
+#"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/ferriff/flashgg/RunIIFall15DR76-1_3_0-25ns_ext1/1_3_1/GluGluHToGG_M-125_13TeV_powheg_pythia8/RunIIFall15DR76-1_3_0-25ns_ext1-1_3_1-v0-RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/160130_032602/0000/myMicroAODOutputFile_10.root"
+
+# test 76X
+"root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshgg/ferriff/flashgg/RunIIFall15DR76-1_3_0-25ns_ext1/1_3_1/DoubleEG/RunIIFall15DR76-1_3_0-25ns_ext1-1_3_1-v0-Run2015C_25ns-16Dec2015-v1/160127_022819/0000/myMicroAODOutputFile_1.root"
         )
 )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
@@ -52,67 +55,72 @@ process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string("test.root")
 )
 
-from flashgg.Systematics.flashggDiPhotonSystematics_cfi import smearBins, scaleBins, smearBinsRereco, scaleBinsRereco
-process.flashggDiPhotonsScaled = cms.EDProducer('FlashggDiPhotonSystematicProducer',
-                                              src = cms.InputTag("flashggDiPhotons"),
-                                              SystMethods2D = cms.VPSet(),
-                                              # the number of syst methods matches the number of nuisance parameters
-                                              # assumed for a given systematic uncertainty and is NOT required
-                                              # to match 1-to-1 the number of bins above.
-                                              SystMethods = cms.VPSet(
-                                                      cms.PSet( PhotonMethodName = cms.string("FlashggPhotonSigEoverESmearing"),
-                                                               MethodName = cms.string("FlashggDiPhotonFromPhoton"),
-                                                               Label = cms.string("DataSigmaEOverESmearing"),
-                                                               NSigmas = cms.vint32(0,0),
-                                                               OverallRange = cms.string("1"),
-                                                               BinList = smearBinsRereco,
-                                                               ApplyCentralValue = cms.bool(True),
-                                                               Debug = cms.untracked.bool(False)),
-                                                      cms.PSet( PhotonMethodName = cms.string("FlashggPhotonScale"),
-                                                               MethodName = cms.string("FlashggDiPhotonFromPhoton"),
-                                                               Label = cms.string("DataScale"),
-                                                               NSigmas = cms.vint32(0,0),
-                                                               OverallRange = cms.string("1"),
-                                                               BinList = scaleBinsRereco,
-                                                               ApplyCentralValue = cms.bool(True),
-                                                               Debug = cms.untracked.bool(False))
-                                              ))
-
-process.flashggDiPhotonsSmeared = cms.EDProducer('FlashggDiPhotonSystematicProducer',
-                                                src = cms.InputTag("flashggDiPhotons"),
-                                                SystMethods2D = cms.VPSet(),
-                                                # the number of syst methods matches the number of nuisance parameters
-                                                # assumed for a given systematic uncertainty and is NOT required
-                                                # to match 1-to-1 the number of bins above.
-                                                SystMethods = cms.VPSet(
-                                                        cms.PSet( PhotonMethodName = cms.string("FlashggPhotonSigEoverESmearing"),
-                                                                 MethodName = cms.string("FlashggDiPhotonFromPhoton"),
-                                                                 Label = cms.string("MCSigmaEOverESmearing"),
-                                                                 NSigmas = cms.vint32(0,0),
-                                                                 OverallRange = cms.string("1"),
-                                                                 BinList = smearBinsRereco,
-                                                                 ApplyCentralValue = cms.bool(True),
-                                                                 Debug = cms.untracked.bool(False)),
-                                                        cms.PSet( PhotonMethodName = cms.string("FlashggPhotonSmearConstant"),
-                                                                 MethodName = cms.string("FlashggDiPhotonFromPhoton"),
-                                                                 #Label = cms.string("MCSmearHighR9EE"),
-                                                                 Label = cms.string("MCSmear"),
-                                                                 NSigmas = cms.vint32(-1,1),
-                                                                 #OverallRange = cms.string("r9>0.94&&abs(superCluster.eta)>=1.5"),
-                                                                 OverallRange = cms.string("1"),
-                                                                 BinList = smearBinsRereco,
-                                                                 # has to match the labels embedded in the photon object as
-                                                                 # defined e.g. in flashgg/MicroAOD/python/flashggRandomizedPerPhotonDiPhotonProducer_cff.py
-                                                                 #           or in flashgg/MicroAOD/python/flashggRandomizedPhotonProducer_cff.py (if at MicroAOD prod.)
-                                                                 RandomLabel = cms.string("rnd_g_E"),
-                                                                 Debug = cms.untracked.bool(False),
-                                                                 ApplyCentralValue = cms.bool(True),
-                                                                 ExaggerateShiftUp = cms.bool(False)),
-                                                ))
-
+#from flashgg.Systematics.flashggDiPhotonSystematics_cfi import smearBins, scaleBins, smearBinsRereco, scaleBinsRereco
+#process.flashggDiPhotonsScaled = cms.EDProducer('FlashggDiPhotonSystematicProducer',
+#                                              src = cms.InputTag("flashggDiPhotons"),
+#                                              SystMethods2D = cms.VPSet(),
+#                                              # the number of syst methods matches the number of nuisance parameters
+#                                              # assumed for a given systematic uncertainty and is NOT required
+#                                              # to match 1-to-1 the number of bins above.
+#                                              SystMethods = cms.VPSet(
+#                                                      cms.PSet( PhotonMethodName = cms.string("FlashggPhotonSigEoverESmearing"),
+#                                                               MethodName = cms.string("FlashggDiPhotonFromPhoton"),
+#                                                               Label = cms.string("DataSigmaEOverESmearing"),
+#                                                               NSigmas = cms.vint32(0,0),
+#                                                               OverallRange = cms.string("1"),
+#                                                               BinList = smearBinsRereco,
+#                                                               ApplyCentralValue = cms.bool(True),
+#                                                               Debug = cms.untracked.bool(False)),
+#                                                      cms.PSet( PhotonMethodName = cms.string("FlashggPhotonScale"),
+#                                                               MethodName = cms.string("FlashggDiPhotonFromPhoton"),
+#                                                               Label = cms.string("DataScale"),
+#                                                               NSigmas = cms.vint32(0,0),
+#                                                               OverallRange = cms.string("1"),
+#                                                               BinList = scaleBinsRereco,
+#                                                               ApplyCentralValue = cms.bool(True),
+#                                                               Debug = cms.untracked.bool(False))
+#                                              ))
+#
+#process.flashggDiPhotonsSmeared = cms.EDProducer('FlashggDiPhotonSystematicProducer',
+#                                                src = cms.InputTag("flashggDiPhotons"),
+#                                                SystMethods2D = cms.VPSet(),
+#                                                # the number of syst methods matches the number of nuisance parameters
+#                                                # assumed for a given systematic uncertainty and is NOT required
+#                                                # to match 1-to-1 the number of bins above.
+#                                                SystMethods = cms.VPSet(
+#                                                        cms.PSet( PhotonMethodName = cms.string("FlashggPhotonSigEoverESmearing"),
+#                                                                 MethodName = cms.string("FlashggDiPhotonFromPhoton"),
+#                                                                 Label = cms.string("MCSigmaEOverESmearing"),
+#                                                                 NSigmas = cms.vint32(0,0),
+#                                                                 OverallRange = cms.string("1"),
+#                                                                 BinList = smearBinsRereco,
+#                                                                 ApplyCentralValue = cms.bool(True),
+#                                                                 Debug = cms.untracked.bool(False)),
+#                                                        cms.PSet( PhotonMethodName = cms.string("FlashggPhotonSmearConstant"),
+#                                                                 MethodName = cms.string("FlashggDiPhotonFromPhoton"),
+#                                                                 #Label = cms.string("MCSmearHighR9EE"),
+#                                                                 Label = cms.string("MCSmear"),
+#                                                                 NSigmas = cms.vint32(-1,1),
+#                                                                 #OverallRange = cms.string("r9>0.94&&abs(superCluster.eta)>=1.5"),
+#                                                                 OverallRange = cms.string("1"),
+#                                                                 BinList = smearBinsRereco,
+#                                                                 # has to match the labels embedded in the photon object as
+#                                                                 # defined e.g. in flashgg/MicroAOD/python/flashggRandomizedPerPhotonDiPhotonProducer_cff.py
+#                                                                 #           or in flashgg/MicroAOD/python/flashggRandomizedPhotonProducer_cff.py (if at MicroAOD prod.)
+#                                                                 RandomLabel = cms.string("rnd_g_E"),
+#                                                                 Debug = cms.untracked.bool(False),
+#                                                                 ApplyCentralValue = cms.bool(True),
+#                                                                 ExaggerateShiftUp = cms.bool(False)),
+#                                                ))
 
 from HLTrigger.HLTfilters.hltHighLevel_cfi import hltHighLevel
-process.hltHighLevel= hltHighLevel.clone(HLTPaths = cms.vstring("HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass95_v*") )
+#process.hltHighLevel= hltHighLevel.clone(HLTPaths = cms.vstring("HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass95_v*") )
+process.hltHighLevel= hltHighLevel.clone(HLTPaths = cms.vstring(
+    "HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass95_v*",
+    "HLT_Diphoton30PV_18PV_R9Id_AND_IsoCaloId_AND_HE_R9Id_DoublePixelVeto_Mass55_v*",
+    "HLT_Diphoton30EB_18EB_R9Id_OR_IsoCaloId_AND_HE_R9Id_DoublePixelVeto_Mass55_v*",
+    "HLT_Ele22_eta2p1_WPLoose_Gsf_v*"
+) )
 
 from flashgg.Taggers.flashggPreselectedDiPhotons_cfi import flashggPreselectedDiPhotons
 process.kinPreselDiPhotons = flashggPreselectedDiPhotons.clone(
@@ -141,6 +149,9 @@ process.kinPreselDiPhotons = flashggPreselectedDiPhotons.clone(
 ############### do not split by process
 ############### process.diphotonDumper.nameTemplate = "minitree_$SQRTS_$LABEL_$SUBCAT"
 
+process.load("flashgg.Systematics.flashggDiPhotonSystematics_cfi")
+process.flashggDiPhotonSystematics.src = "flashggUpdatedIdMVADiPhotons"
+
 import flashgg.Taggers.dumperConfigTools as cfgTools
 
 #process.load("flashgg.Taggers.flashggDiPhotonMVA_cfi")
@@ -150,6 +161,8 @@ process.load("flashgg/Taggers/flashggTagSequence_cfi")
 process.load("flashgg/Taggers/flashggUpdatedIdMVADiPhotons_cfi")
 #process.flashggDiPhotonMVA.DiPhotonTag = "flashggUpdatedIdMVADiPhotons"
 process.flashggUntagged.Boundaries = cms.vdouble(-2)
+process.flashggUntagged.DiPhotonTag    = "flashggDiPhotonSystematics"
+process.flashggDiPhotonMVA.DiPhotonTag = "flashggDiPhotonSystematics"
 
 from flashgg.Taggers.tagsDumpers_cfi import createTagDumper
 process.diphotonDumper = createTagDumper("UntaggedTag")
@@ -161,6 +174,15 @@ process.diphotonDumper.dumpWorkspace = False
 process.diphotonDumper.quietRooFit = True
 process.diphotonDumper.nameTemplate ="$PROCESS_$SQRTS_$LABEL"
 
+process.diphotonDumper.globalVariables.addTriggerBits = cms.PSet(
+    tag = cms.InputTag("TriggerResults::HLT"),
+    bits = cms.vstring(
+    "HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass95",
+    "HLT_Diphoton30PV_18PV_R9Id_AND_IsoCaloId_AND_HE_R9Id_DoublePixelVeto_Mass55",
+    "HLT_Diphoton30EB_18EB_R9Id_OR_IsoCaloId_AND_HE_R9Id_DoublePixelVeto_Mass55",
+    "HLT_Ele22_eta2p1_WPLoose_Gsf_v"
+    )
+)
 
 
 ## define categories and associated objects to dump
@@ -256,21 +278,41 @@ customize(process)
 
 print "processType:", customize.processType, "processId:", customize.processId
 
+def debug_process(process):
+        #print "--- Dumping modules that take diphotons as input: ---"
+        #mns = process.p.moduleNames()
+        #for mn in mns:
+        #    module = getattr(process,mn)
+        #    if hasattr(module,"src") and type(module.src) == type(cms.InputTag("")) and module.src.value().count("DiPhoton"):
+        #        print str(module),module.src
+        #    elif hasattr(module,"DiPhotonTag"):
+        #        print str(module),module.DiPhotonTag
+        #print
+        vpsetlist = [process.flashggDiPhotonSystematics.SystMethods]
+        print (14*"-"+" DUMPING SYSTEMATIC OVERVIEW "+14*"-")
+        print "%20s %15s %20s" % ("Systematic","Central value?","Systematic shifts?")
+        print 57*"-"
+        printSystematicVPSet(vpsetlist)
+        print (13*"-"+" DUMPING 2D SYSTEMATIC OVERVIEW "+12*"-")
+        print "%20s %15s %20s" % ("Systematic","Central value?","Systematic shifts?")
+        print 57*"-"
+        vpsetlist2D  = [process.flashggDiPhotonSystematics.SystMethods2D]
+        printSystematicVPSet(vpsetlist2D)
+
+from flashgg.Systematics.SystematicsCustomize import *
+
+
 if customize.processType == 'data':
         print 'data'
-        process.kinPreselDiPhotons.src = "flashggDiPhotonsScaled"
-        #process.diphotonDumper.src = "flashggDiPhotonsScaled" ################# FIXME
-        #process.diphotonDumper.src = "flashggDiPhotons"
-        process.flashggUntagged.DiPhotonTag = "flashggDiPhotonsScaled" ################# FIXME
-        #process.p = cms.Path( process.hltHighLevel * process.kinPreselDiPhotons * process.diphotonDumper )
         process.p = cms.Path( process.hltHighLevel * process.flashggDiPhotonMVA * process.diphotonDumper )
+        customizePhotonSystematicsForData(process)
+        debug_process(process)
 else:
         print 'not data'
-        process.kinPreselDiPhotons.src = "flashggDiPhotonsSmeared"
-        #process.diphotonDumper.src = "flashggDiPhotonsSmeared" ################# FIXME
-        #process.diphotonDumper.src = "flashggDiPhotons"
-        process.flashggDiPhotonsSmeared.src = "flashggUpdatedIdMVADiPhotons"
-        process.flashggDiPhotonMVA.DiPhotonTag = "flashggUpdatedIdMVADiPhotons"
-        process.flashggUntagged.DiPhotonTag = "flashggDiPhotonsSmeared" ################# FIXME
-        process.diphotonDumper.globalVariables.puReWeight = True
         process.p = cms.Path( process.flashggDiPhotonMVA * process.diphotonDumper )
+        process.diphotonDumper.globalVariables.puReWeight = True
+        vpsetlist = [process.flashggDiPhotonSystematics.SystMethods]
+        for vpset in vpsetlist:
+            for pset in vpset:
+                pset.NSigmas = cms.vint32()
+        debug_process(process)

@@ -71,7 +71,7 @@ smearBinsRereco = cms.PSet(
             cms.PSet( lowBounds = cms.vdouble(2.000,0.940    ) , upBounds = cms.vdouble(6.000,999.000 ) , values = cms.vdouble( 0.0231 ) , uncertainties = cms.vdouble( 0.00042066 )  ) ,
                     ))
 
-scalesAndSmearingsPrefix = cms.string("EgammaAnalysis/ElectronTools/data/76X_16DecRereco_2015")
+scalesAndSmearingsPrefix = cms.string("EgammaAnalysis/ElectronTools/data/76X_16DecRereco_2015_photons")
 
 
 mvaShiftBins = cms.PSet(
