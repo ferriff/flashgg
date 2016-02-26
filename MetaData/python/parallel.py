@@ -705,8 +705,10 @@ class IclustJob(LsfJob):
             fout.write(script)
             fout.close()
         stat,out = commands.getstatusoutput("chmod 755 %s" % scriptname)
-        stat,out = commands.getstatusoutput("clubatch %s" % scriptname)
+        #stat,out = commands.getstatusoutput("clubatch %s" % scriptname)
                                                          
+        self.exitStatus = -1
+        return -1, "0 0 0 0 0 0 0 0 0"
         self.exitStatus = stat
 
         if self.exitStatus != 0:
