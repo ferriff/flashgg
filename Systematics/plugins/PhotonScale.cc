@@ -34,6 +34,7 @@ namespace flashgg {
         correctionFile_( conf.getParameter<std::string>( "CorrectionFile" )),
         scaler_(correctionFile_)
     {
+        if (applyCentralValue()) scaler_.doScale = true;
     }
 
     std::string PhotonScale::shiftLabel( int syst_value ) const
@@ -54,14 +55,14 @@ namespace flashgg {
         if( overall_range_( y ) ) {
             auto shift_val = scaler_.ScaleCorrection(ev.run(), y.isEB(), y.full5x5_r9(), y.superCluster()->eta(), y.et());
             auto shift_err = scaler_.ScaleCorrectionUncertainty(ev.run(), y.isEB(), y.full5x5_r9(), y.superCluster()->eta(), y.et());
-            if (!applyCentralValue()) shift_val = 0.;
-            float scale = 1. + shift_val + syst_shift * shift_err;
+            if (!applyCentralValue()) shift_val = 1.;
+            float scale = shift_val + syst_shift * shift_err;
             if( debug_ ) {
                 std::cout << "  " << shiftLabel( syst_shift ) << ": Photon has pt= " << y.pt() << " eta=" << y.eta()
                     << " and we apply a multiplicative correction of " << scale << std::endl;
             }
             //auto val_err = binContents( y );
-            //y.updateEnergy( shiftLabel( syst_shift ), scale * y.energy() );
+            y.updateEnergy( shiftLabel( syst_shift ), scale * y.energy() );
             //if( val_err.first.size() == 1 && val_err.second.size() == 1 ) { // otherwise no-op because we don't have an entry
             //    float shift_val = val_err.first[0];
             //    if (!applyCentralValue()) shift_val = 0.;
