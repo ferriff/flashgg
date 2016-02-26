@@ -68,9 +68,15 @@ namespace flashgg {
 
         unsigned int ipset = 0;
         unsigned int ipset2D = 0;
+
         for( const auto &pset : vpset ) {
             std::string methodName = pset.getParameter<string>( "MethodName" );
 
+            string photonMethodName = "-";
+            if( pset.exists( "PhotonMethodName" ) ) {
+                photonMethodName = pset.getParameter<string>( "PhotonMethodName" );
+                //                std::cout << "    PhotonMethodName = " << photonMethodName << std::endl;
+            }
             // This block of code supports a list of integer or float type objects
 
             std::vector<param_var> nsigmas = pset.getParameter<vector<param_var> >( "NSigmas" );
