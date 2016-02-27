@@ -147,6 +147,7 @@
 <class name="std::vector<edm::Ptr<flashgg::GenDiPhoton> >"/>
 <class name="edm::Wrapper<std::vector<edm::Ptr<flashgg::GenDiPhoton> > >"/>
 <class name="flashgg::SinglePhotonView" ClassVersion="10">
+  <version ClassVersion="11" checksum="853874792"/>
   <version ClassVersion="10" checksum="853874792"/>
   <field name="pho_" transient="true"/>
 </class>
