@@ -769,7 +769,7 @@ Commands:
                 make_option("-v","--verbose",
                             action="store_true", dest="verbose",
                             default=False,
-                            help="default: %default",)
+                            help="Do not truncate dataset name. default: %default",)
                 ]
                               )
         
@@ -847,7 +847,7 @@ Commands:
         slim_datasets = []
         for d in datasets:
             empty,prim,sec,tier = d.split("/")
-            if len(sec) > maxSec:
+            if len(sec) > maxSec and not self.options.verbose:
                 sec = sec[0:firstHalf]+".."+sec[-secondHalf:-1]
             slim_datasets.append("/%s/%s/%s" % ( prim, sec, tier ) )
         ## datasets = slim_datasets
