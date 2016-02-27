@@ -245,11 +245,9 @@ namespace flashgg {
 
         for( unsigned int ncorr = 0 ; ncorr < Corrections_.size() ; ncorr++ ) {
             Corrections_.at( ncorr )->eventInitialize( evt, setup );
-            fprintf(stderr, "1D --> calling eventInitialize() for %s %s\n", Corrections_.at(ncorr)->name().c_str(), Corrections_.at(ncorr)->label().c_str());
         }
         for( unsigned int ncorr = 0 ; ncorr < Corrections2D_.size() ; ncorr++ ) {
             Corrections2D_.at( ncorr )->eventInitialize(evt, setup );
-            fprintf(stderr, "2D --> calling eventInitialize() for %s %s\n", Corrections2D_.at(ncorr)->name().c_str(), Corrections2D_.at(ncorr)->label().c_str());
         }
 
         globalVars_.update(evt);
